@@ -1,59 +1,306 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Investments API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A REST API built with Laravel for managing clients, accounts, and investment transactions. The application uses MySQL as the database.
 
-## About Laravel
+## 1. Local Setup
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### Requirements
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Before running the project, make sure you have installed:
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+* PHP
+* Composer
+* MySQL
+* phpMyAdmin (optional, for managing the MySQL database)
 
-## Learning Laravel
+### Step 1: Clone the repository
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+```bash
+git clone https://github.com/simona155/investments-api.git
+cd investments-api
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Step 2: Install dependencies
 
-## Laravel Sponsors
+```bash
+composer install
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### Step 3: Configure the environment
 
-### Premium Partners
+Create the `.env` file:
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+```bash
+cp .env.example .env
+```
 
-## Contributing
+Generate the application key:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+php artisan key:generate
+```
 
-## Code of Conduct
+Configure the MySQL database in the `.env` file:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=investments
+DB_USERNAME=root
+DB_PASSWORD=
+```
 
-## Security Vulnerabilities
+Create a database named `investments` in MySQL or phpMyAdmin.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Step 4: Run migrations and seed the database
 
-## License
+```bash
+php artisan migrate --seed
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This creates the required database tables and inserts example clients, accounts, and transactions.
+
+### Step 5: Run the tests
+
+To run the full test suite, use:
+
+```bash
+php artisan test
+```
+
+The tests cover input validation, transaction operations, business rules, account balance, holdings, transaction history, and account isolation.
+
+### Step 6: Start the Laravel server
+
+```bash
+php artisan serve
+```
+
+The API will be available at:
+
+```text
+http://127.0.0.1:8000
+```
+
+---
+
+## 2. Communication with the System
+
+The system communicates through REST API endpoints.
+
+### Deposit
+
+**Request:**
+
+```http
+POST /api/transactions
+```
+
+```json
+{
+    "account_id": 1,
+    "type": "deposit",
+    "amount": 1000
+}
+```
+
+**Response:**
+
+```json
+{
+    "account_id": 1,
+    "type": "deposit",
+    "amount": "1000.00",
+    "instrument": null,
+    "quantity": null,
+    "price": null
+}
+```
+
+### Withdrawal
+
+**Request:**
+
+```http
+POST /api/transactions
+```
+
+```json
+{
+    "account_id": 1,
+    "type": "withdrawal",
+    "amount": 500
+}
+```
+
+**Response:**
+
+```json
+{
+    "account_id": 1,
+    "type": "withdrawal",
+    "amount": "500.00",
+    "instrument": null,
+    "quantity": null,
+    "price": null
+}
+```
+
+### Buy
+
+**Request:**
+
+```http
+POST /api/transactions
+```
+
+```json
+{
+    "account_id": 1,
+    "type": "buy",
+    "instrument": "AAPL",
+    "quantity": 2,
+    "price": 100
+}
+```
+
+**Response:**
+
+```json
+{
+    "account_id": 1,
+    "type": "buy",
+    "amount": "200.00",
+    "instrument": "AAPL",
+    "quantity": 2,
+    "price": "100.00"
+}
+```
+
+The transaction amount is calculated by the system:
+
+```text
+quantity × price = amount
+2 × 100 = 200
+```
+
+### Sell
+
+**Request:**
+
+```http
+POST /api/transactions
+```
+
+```json
+{
+    "account_id": 1,
+    "type": "sell",
+    "instrument": "AAPL",
+    "quantity": 1,
+    "price": 150
+}
+```
+
+**Response:**
+
+```json
+{
+    "account_id": 1,
+    "type": "sell",
+    "amount": "150.00",
+    "instrument": "AAPL",
+    "quantity": 1,
+    "price": "150.00"
+}
+```
+
+The transaction amount is calculated by the system:
+
+```text
+quantity × price = amount
+1 × 150 = 150
+```
+
+### Balance
+
+**Request:**
+
+```http
+GET /api/accounts/1/balance
+```
+
+**Response:**
+
+```json
+{
+    "balance": 1000
+}
+```
+
+### Holdings
+
+**Request:**
+
+```http
+GET /api/accounts/1/holdings
+```
+
+**Response:**
+
+```json
+{
+    "holdings": {
+        "AAPL": "10",
+        "MSFT": "5"
+    }
+}
+```
+
+### Transaction History
+
+**Request:**
+
+```http
+GET /api/accounts/1/transactions
+```
+
+**Response:**
+
+```json
+[
+    {
+        "id": 1,
+        "account_id": 1,
+        "type": "deposit",
+        "amount": "5000.00",
+        "instrument": null,
+        "quantity": null,
+        "price": null,
+        "created_at": "..."
+    },
+    {
+        "id": 2,
+        "account_id": 1,
+        "type": "buy",
+        "amount": "2000.00",
+        "instrument": "AAPL",
+        "quantity": 10,
+        "price": "200.00",
+        "created_at": "..."
+    }
+]
+```
+
+---
+
+## 3. Why This Way?
+
+I chose Laravel with an MVC architecture and an additional Service Layer to divide the application into logical parts, with each part having its own responsibility. The Controllers are responsible for communication with the API, while the main business logic is separated into Service classes.
+
+I placed input validation in `StoreTransactionRequest` so that validation is separated from the business logic. For balance and holdings, I use the transaction history as the source of truth instead of storing separate balance and holdings values.
+
+Transactions are immutable, meaning that there is no possibility of editing or deleting them. This keeps the transaction history unchanged. I used database relationships between Client, Account, and Transaction, while the unique constraint on `client_id` ensures that each client can have only one account.
+
+For business rules, I use a separate `BusinessRuleException`. This allows errors such as insufficient funds or insufficient units to be returned with a clear message and HTTP status `422`.
