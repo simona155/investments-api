@@ -26,6 +26,15 @@ class TransactionController extends Controller
             return response()->json($transaction, 201);
         }
 
+        if ($data['type'] === 'withdrawal') {
+            $transaction = $transactionService->withdraw(
+                $account,
+                $data['amount']
+            );
+
+            return response()->json($transaction, 201);
+        }
+
         return response()->json([
             'message' => 'This transaction type is not implemented yet.'
         ], 422);

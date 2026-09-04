@@ -37,4 +37,72 @@ class TransactionTest extends TestCase
             'amount' => 1000,
         ]);
     }
+
+    public function test_withdrawal_creates_transaction(): void
+    {
+        $client = Client::create([
+            'name' => 'Test Client',
+        ]);
+
+        $account = Account::create([
+            'client_id' => $client->id,
+            'currency' => 'EUR',
+        ]);
+
+        $this->postJson('/api/transactions', [
+            'account_id' => $account->id,
+            'type' => 'deposit',
+            'amount' => 1000,
+        ]);
+
+        $response = $this->postJson('/api/transactions', [
+            'account_id' => $account->id,
+            'type' => 'withdrawal',
+            'amount' => 300,
+        ]);
+
+        $response->assertStatus(201);
+
+        $this->assertDatabaseHas('transactions', [
+            'account_id' => $account->id,
+            'type' => 'withdrawal',
+            'amount' => 300,
+        ]);
+    }
+
+    public function test_withdrawal_is_rejected_when_insufficient_funds(): void
+    {
+        $client = Client::create([
+            'name' => 'Test Client',
+        ]);
+
+        $account = Account::create([
+            'client_id' => $client->id,
+            'currency' => 'EUR',
+        ]);
+
+        $this->postJson('/api/transactions', [
+            'account_id' => $account->id,
+            'type' => 'deposit',
+            'amount' => 1000,
+        ]);
+
+        $response = $this->postJson('/api/transactions', [
+            'account_id' => $account->id,
+            'type' => 'withdrawal',
+            'amount' => 1200,
+        ]);
+
+        $response->assertStatus(422);
+
+        $response->assertJson([
+            'message' => 'Немате доволно средства на сметката.',
+        ]);
+
+        $this->assertDatabaseMissing('transactions', [
+            'account_id' => $account->id,
+            'type' => 'withdrawal',
+            'amount' => 1200,
+        ]);
+    }
 }
