@@ -8,6 +8,10 @@ use App\Models\Transaction;
 
 class TransactionService
 {
+    public function __construct(
+        private AccountBalanceService $accountBalanceService
+    ) {}
+
     public function deposit(Account $account, float $amount): Transaction
     {
         return Transaction::create([
@@ -17,27 +21,11 @@ class TransactionService
         ]);
     }
 
-    private function getCashBalance(Account $account): float
-    {
-        return (float) $account
-            ->transactions()
-            ->selectRaw("
-            COALESCE(SUM(
-                CASE
-                    WHEN type = 'deposit' THEN amount
-                    WHEN type = 'withdrawal' THEN -amount
-                    WHEN type = 'buy' THEN -amount
-                    WHEN type = 'sell' THEN amount
-                    ELSE 0
-                END
-            ), 0) AS balance
-        ")
-            ->value('balance');
-    }
+
 
     public function withdraw(Account $account, float $amount): Transaction
     {
-        $balance = $this->getCashBalance($account);
+        $balance = $this->accountBalanceService->getBalance($account);
 
         if ($amount > $balance) {
             throw new BusinessRuleException(
@@ -60,7 +48,7 @@ class TransactionService
     ): Transaction {
         $amount = $quantity * $price;
 
-        $balance = $this->getCashBalance($account);
+        $balance = $this->accountBalanceService->getBalance($account);
 
         if ($amount > $balance) {
             throw new BusinessRuleException(
