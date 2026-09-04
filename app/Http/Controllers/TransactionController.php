@@ -34,7 +34,16 @@ class TransactionController extends Controller
 
             return response()->json($transaction, 201);
         }
+        if ($data['type'] === 'buy') {
+            $transaction = $transactionService->buy(
+                $account,
+                $data['instrument'],
+                $data['quantity'],
+                $data['price']
+            );
 
+            return response()->json($transaction, 201);
+        }
         return response()->json([
             'message' => 'This transaction type is not implemented yet.'
         ], 422);

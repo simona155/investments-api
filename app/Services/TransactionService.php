@@ -51,4 +51,30 @@ class TransactionService
             'amount' => $amount,
         ]);
     }
+
+    public function buy(
+        Account $account,
+        string $instrument,
+        int $quantity,
+        float $price
+    ): Transaction {
+        $amount = $quantity * $price;
+
+        $balance = $this->getCashBalance($account);
+
+        if ($amount > $balance) {
+            throw new BusinessRuleException(
+                'Немате доволно средства на сметката.'
+            );
+        }
+
+        return Transaction::create([
+            'account_id' => $account->id,
+            'type' => 'buy',
+            'amount' => $amount,
+            'instrument' => $instrument,
+            'quantity' => $quantity,
+            'price' => $price,
+        ]);
+    }
 }
