@@ -214,4 +214,137 @@ class TransactionTest extends TestCase
             'price' => 25,
         ]);
     }
+
+    public function test_sell_creates_transaction(): void
+    {
+        $client = Client::create([
+            'name' => 'Test Client',
+        ]);
+
+        $account = Account::create([
+            'client_id' => $client->id,
+            'currency' => 'EUR',
+        ]);
+
+        $this->postJson('/api/transactions', [
+            'account_id' => $account->id,
+            'type' => 'deposit',
+            'amount' => 1000,
+        ]);
+
+        $this->postJson('/api/transactions', [
+            'account_id' => $account->id,
+            'type' => 'buy',
+            'instrument' => 'AAPL',
+            'quantity' => 10,
+            'price' => 20,
+        ]);
+
+        $response = $this->postJson('/api/transactions', [
+            'account_id' => $account->id,
+            'type' => 'sell',
+            'instrument' => 'AAPL',
+            'quantity' => 4,
+            'price' => 30,
+        ]);
+
+        $response->assertStatus(201);
+
+        $this->assertDatabaseHas('transactions', [
+            'account_id' => $account->id,
+            'type' => 'sell',
+            'instrument' => 'AAPL',
+            'quantity' => 4,
+            'price' => 30,
+            'amount' => 120,
+        ]);
+    }
+
+    public function test_sell_calculates_amount_from_quantity_and_price(): void
+    {
+        $client = Client::create([
+            'name' => 'Test Client',
+        ]);
+
+        $account = Account::create([
+            'client_id' => $client->id,
+            'currency' => 'EUR',
+        ]);
+
+        $this->postJson('/api/transactions', [
+            'account_id' => $account->id,
+            'type' => 'deposit',
+            'amount' => 1000,
+        ]);
+
+        $this->postJson('/api/transactions', [
+            'account_id' => $account->id,
+            'type' => 'buy',
+            'instrument' => 'AAPL',
+            'quantity' => 10,
+            'price' => 20,
+        ]);
+
+        $this->postJson('/api/transactions', [
+            'account_id' => $account->id,
+            'type' => 'sell',
+            'instrument' => 'AAPL',
+            'quantity' => 3,
+            'price' => 50,
+        ]);
+
+        $this->assertDatabaseHas('transactions', [
+            'account_id' => $account->id,
+            'type' => 'sell',
+            'amount' => 150,
+        ]);
+    }
+
+    public function test_sell_is_rejected_when_insufficient_holdings(): void
+    {
+        $client = Client::create([
+            'name' => 'Test Client',
+        ]);
+
+        $account = Account::create([
+            'client_id' => $client->id,
+            'currency' => 'EUR',
+        ]);
+
+        $this->postJson('/api/transactions', [
+            'account_id' => $account->id,
+            'type' => 'deposit',
+            'amount' => 1000,
+        ]);
+
+        $this->postJson('/api/transactions', [
+            'account_id' => $account->id,
+            'type' => 'buy',
+            'instrument' => 'AAPL',
+            'quantity' => 5,
+            'price' => 20,
+        ]);
+
+        $response = $this->postJson('/api/transactions', [
+            'account_id' => $account->id,
+            'type' => 'sell',
+            'instrument' => 'AAPL',
+            'quantity' => 10,
+            'price' => 30,
+        ]);
+
+        $response->assertStatus(422);
+
+        $response->assertJson([
+            'message' => 'Немате доволно единици за продажба.',
+        ]);
+
+        $this->assertDatabaseMissing('transactions', [
+            'account_id' => $account->id,
+            'type' => 'sell',
+            'instrument' => 'AAPL',
+            'quantity' => 10,
+            'price' => 30,
+        ]);
+    }
 }

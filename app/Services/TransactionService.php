@@ -77,4 +77,47 @@ class TransactionService
             'price' => $price,
         ]);
     }
+
+    private function getHolding(Account $account, string $instrument): int
+    {
+        return (int) $account
+            ->transactions()
+            ->where('instrument', $instrument)
+            ->selectRaw("
+            COALESCE(SUM(
+                CASE
+                    WHEN type = 'buy' THEN quantity
+                    WHEN type = 'sell' THEN -quantity
+                    ELSE 0
+                END
+            ), 0) AS holding
+        ")
+            ->value('holding');
+    }
+
+    public function sell(
+        Account $account,
+        string $instrument,
+        int $quantity,
+        float $price
+    ): Transaction {
+        $holding = $this->getHolding($account, $instrument);
+
+        if ($quantity > $holding) {
+            throw new BusinessRuleException(
+                'Немате доволно единици за продажба.'
+            );
+        }
+
+        $amount = $quantity * $price;
+
+        return Transaction::create([
+            'account_id' => $account->id,
+            'type' => 'sell',
+            'amount' => $amount,
+            'instrument' => $instrument,
+            'quantity' => $quantity,
+            'price' => $price,
+        ]);
+    }
 }
