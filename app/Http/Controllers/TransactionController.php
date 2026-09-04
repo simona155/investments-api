@@ -58,4 +58,11 @@ class TransactionController extends Controller
             'message' => 'This transaction type is not implemented yet.'
         ], 422);
     }
+
+    public function history(Account $account): JsonResponse
+    {
+        return response()->json(
+            $account->transactions()->get()
+        );
+    }
 }

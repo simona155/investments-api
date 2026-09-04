@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Account;
 use App\Models\Client;
-use App\Models\Transaction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -345,6 +344,71 @@ class TransactionTest extends TestCase
             'instrument' => 'AAPL',
             'quantity' => 10,
             'price' => 30,
+        ]);
+    }
+
+    public function test_transaction_history_returns_only_account_transactions(): void
+    {
+        $client1 = Client::create([
+            'name' => 'Client One',
+        ]);
+
+        $account1 = Account::create([
+            'client_id' => $client1->id,
+            'currency' => 'EUR',
+        ]);
+
+        $client2 = Client::create([
+            'name' => 'Client Two',
+        ]);
+
+        $account2 = Account::create([
+            'client_id' => $client2->id,
+            'currency' => 'EUR',
+        ]);
+
+        $this->postJson('/api/transactions', [
+            'account_id' => $account1->id,
+            'type' => 'deposit',
+            'amount' => 1000,
+        ]);
+
+        $this->postJson('/api/transactions', [
+            'account_id' => $account1->id,
+            'type' => 'buy',
+            'instrument' => 'AAPL',
+            'quantity' => 10,
+            'price' => 20,
+        ]);
+
+        $this->postJson('/api/transactions', [
+            'account_id' => $account2->id,
+            'type' => 'deposit',
+            'amount' => 500,
+        ]);
+
+        $response = $this->getJson(
+            "/api/accounts/{$account1->id}/transactions"
+        );
+
+        $response
+            ->assertStatus(200)
+            ->assertJsonCount(2);
+
+        $response->assertJsonFragment([
+            'account_id' => $account1->id,
+            'type' => 'deposit',
+        ]);
+
+        $response->assertJsonFragment([
+            'account_id' => $account1->id,
+            'type' => 'buy',
+            'instrument' => 'AAPL',
+            'quantity' => 10,
+        ]);
+
+        $response->assertJsonMissing([
+            'account_id' => $account2->id,
         ]);
     }
 }
